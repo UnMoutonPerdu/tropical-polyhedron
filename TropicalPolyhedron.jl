@@ -44,19 +44,21 @@ Return the dimension of a tropical polyhedron in matrix representation.
 ### Input
 - `P`  -- tropical polyhedron in matrix representation
 ### Output
-The dimension of the tropical polyhedron given as the pair ``(n, m)`` where n is the number of half-spaces 
-characterising the set, and m is the size of the elements included in the polyhedron.
-If their are no constraints in the defintion of the polyhedron, ``m`` is set to ``0``.
+The dimension of the tropical polyhedron corresponds to the number of half-spaces used to define it.
 """
 function dim(P::TPoly{T}) where {T<:Real}
     dim_poly = size(P.A)[1]
+    return dim_poly
+end
+
+function constrained_dimensions(P::TPoly{T}) where {T<:Real} 
     size_vector = 0
     try 
         size_vector = size(P.A[1])[1]
     catch 
         size_vector = 0
     end
-    return dim_poly, size_vector
+    return size_vector
 end
 
 """
@@ -276,7 +278,7 @@ NLP Solvers for constraints
 """
 
 function is_nlp_infeasible(status)
-    if status == JuMP.LOCALLY_INFEASIBLE 
+    if status == JuMP.LOCALLY_INFEASIBLE || status == JuMP.INFEASIBLE
         return true
     end
     return status == JuMP.INFEASIBLE_OR_UNBOUNDED
@@ -342,7 +344,7 @@ A set of constraints are in conflict, if it is not possible to find an element w
 Also returns `false` if the given polyhedron is empty.
 """
 function conflicting_constraints(P::TPoly{T}) where {T<:Real}
-    if dim(P)[1] == 0
+    if dim(P)[1] >= 1
         return false
     end
     c = [1.0 for _ = 1:size(P.A[1])[1]]
