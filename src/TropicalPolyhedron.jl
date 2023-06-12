@@ -51,6 +51,14 @@ function dim(P::TPoly{T}) where {T<:Real}
     return dim_poly
 end
 
+"""
+    constrained_dimensions(P::TPoly{T}) where {T<:Real}
+Return the dimension of the constraints, i.e the size of the elements to which the constraints are applied.
+### Input
+- `P`  -- tropical polyhedron in matrix representation
+### Output
+The dimension of the constraints. Outputs 0 if there is no constraint.
+"""
 function constrained_dimensions(P::TPoly{T}) where {T<:Real} 
     size_vector = 0
     try 
@@ -71,7 +79,7 @@ or if it's impossible to find an element in the space describing by the polyhedr
 ``true`` if the tropical polyhedron is empty, ``false`` otherwise.
 """
 function is_empty(P::TPoly{T}) where {T<:Real}
-    return dim(P)[1] > 0 ? conflicting_constraints(P) : true
+    return dim(P) > 0 ? conflicting_constraints(P) : true
 end
 
 """
@@ -344,7 +352,7 @@ A set of constraints are in conflict, if it is not possible to find an element w
 Also returns `false` if the given polyhedron is empty.
 """
 function conflicting_constraints(P::TPoly{T}) where {T<:Real}
-    if dim(P)[1] >= 1
+    if dim(P) >= 1
         return false
     end
     c = [1.0 for _ = 1:size(P.A[1])[1]]

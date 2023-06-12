@@ -1,5 +1,5 @@
 using Test 
-include("TropicalPolyhedron.jl")
+include("../src/TropicalPolyhedron.jl")
 
 
 
@@ -31,6 +31,10 @@ for N in [Float64]
     @testset "Random Polyhedron" begin
         randp = rand(TPoly)
         @test dim(randp) == 2 
+    end
+
+    @testset "Emptiness Test" begin
+    
     end
 
 
