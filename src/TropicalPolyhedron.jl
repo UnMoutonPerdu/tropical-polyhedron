@@ -149,7 +149,18 @@ or if it's impossible to find an element in the space describing by the polyhedr
 ``true`` if the tropical polyhedron is empty, ``false`` otherwise.
 """
 function is_empty(P::TropicalPolyhedron{T}) where {T<:Real}
-    return dim(P) > 0 ? conflicting_constraints(P) : true
+    number_constraints = dim(P)
+    number_variables = constrained_dimensions(P)
+    if number_constraints == 0 || number_variables == 0
+        return true
+    end 
+
+    nodes = Vector{Node{T}}([])
+
+    for i in 1:(number_constraints+number_variables+1)
+        nodes[i] = Node(i)
+    end
+
 end
 
 """

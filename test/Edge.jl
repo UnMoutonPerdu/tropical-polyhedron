@@ -1,8 +1,6 @@
 using Test
-include("../src/Node.jl")
-include("../src/Edge.jl")
 
-for N in [Float64]
+for T in [Float64]
 
     @testset "Edge Initialization" begin
         try

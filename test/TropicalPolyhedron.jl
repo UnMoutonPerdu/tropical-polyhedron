@@ -1,7 +1,7 @@
 using Test 
 include("../src/TropicalPolyhedron.jl")
-
-
+include("../src/Node.jl")
+include("../src/Edge.jl")
 
 for N in [Float64]
 
