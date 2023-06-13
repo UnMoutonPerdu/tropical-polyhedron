@@ -30,9 +30,23 @@ end
 
 """
     Base.:(==)(N::Node{T}, M::Node{T}) where {T<:Real} 
-Overriding of the (==) operator for two elements of type Node.
+Overriding of the (==) operator for two elements of type Node. 
+Two nodes are equal if their values are the same. If so, we check if their list of linked nodes is of the same size.
 """
-Base.:(==)(N::Node{T}, M::Node{T}) where {T<:Real} = (N.val == M.val) && (N.linked_nodes == M.linked_nodes)
+Base.:(==)(N::Node{T}, M::Node{T}) where {T<:Real} = 
+(get_value(N) == get_value(M)) && check_linked_nodes(N, M)
+
+function check_linked_nodes(N::Node{T}, M::Node{T}) where {T<:Real} 
+    if size(get_linked_nodes(N)) != size(get_linked_nodes(M))
+        return false 
+    end
+    for i in 1:size(get_linked_nodes(N))[1]
+        if get_value(get_linked_nodes(N)[i]) != get_value(get_linked_nodes(M)[i])
+            return false
+        end
+    end
+    return true
+end
 
 """
     get_value(node::Node{T}) where {T<:Real}
