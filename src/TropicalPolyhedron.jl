@@ -154,13 +154,82 @@ function is_empty(P::TropicalPolyhedron{T}) where {T<:Real}
     if number_constraints == 0 || number_variables == 0
         return true
     end 
+    number_nodes = number_constraints+number_variables+1
+    A, B, C, D = constraints_list(P)
 
     nodes = Vector{Node{T}}([])
+    nodes_seen = Vector([false for _ in 1:number_nodes])
 
-    for i in 1:(number_constraints+number_variables+1)
-        nodes[i] = Node(i)
+    for i in 1:number_nodes
+        push!(nodes, Node(T(i)))
     end
 
+    for i in 1:number_constraints
+        for j in 1:number_variables
+            add_edge!(nodes[i], nodes[j+number_constraints], C[i][j])
+            add_edge!(nodes[i], nodes[number_nodes], D[i])
+            add_edge!(nodes[j+number_constraints], nodes[i], -A[i][j])
+            add_edge!(nodes[number_nodes], nodes[i], -B[i])
+        end
+    end
+
+    cycle_found = false
+    max_turn = false
+    current_node = number_nodes
+    number_payments = 0
+    payoff = 0
+
+    for i in 1:number_nodes
+        println("Node : ", i)
+        println("List of linked nodes : ", get_linked_nodes(nodes[i]))
+    end
+
+    while !cycle_found
+        println("Current node : ", current_node)
+        println("List of linked nodes : ", get_linked_nodes(nodes[current_node]))
+        if nodes_seen[current_node]
+            println("Cycle found")
+            cycle_found = true
+            break
+        else 
+            nodes_seen[current_node] = true
+        end
+        
+        node_to_go = 0
+        if max_turn 
+            value = -Inf
+        else 
+            value = +Inf 
+        end
+
+        if number_outgoing_arcs(nodes[current_node]) == 0
+            println("Stuck")
+            break
+        end
+
+        for k in keys(get_linked_nodes(nodes[current_node]))
+            if max_turn 
+                if get_linked_nodes(nodes[current_node])[k] > value 
+                    value = get_linked_nodes(nodes[current_node])[k]
+                    node_to_go = k 
+                end
+            else 
+                if get_linked_nodes(nodes[current_node])[k] < value 
+                    value = get_linked_nodes(nodes[current_node])[k]
+                    node_to_go = k 
+                end
+            end
+        end
+        number_payments += 1
+        payoff += value 
+        current_node = Int64(round(node_to_go))
+        max_turn = !max_turn
+    end
+    if (payoff/number_payments >= 1/(number_variables+1))
+        return true
+    else
+        return false
+    end 
 end
 
 """
@@ -176,7 +245,7 @@ Add a constraint to a polyhedron. The constraint as given as 4 separated vectors
 The modified polyhedron.
 """
 function add_constraint!(P::TropicalPolyhedron{T}, a::Vector{T}, b::T, c::Vector{T}, d::T) where {T<:Real}
-    if !is_empty(P) && length(a) != length(P.A[1])
+    if dim(P) > 0 && length(a) != constrained_dimensions(P)
         error("new constraint should have the same number of coefficients that the current constraints")
     else 
         push!(P.A, a)

@@ -8,7 +8,7 @@ for T in [Float64]
         ## Basic Initialization
         n1 = Node()
         @test get_value(n1) == T(0)
-        @test get_linked_nodes(n1) == Dict()   
+        @test get_linked_nodes(n1) == Dict()  
         
         ## Complete Initialization
         n1 = Node(T(2), Dict(T(3) => T(1)))

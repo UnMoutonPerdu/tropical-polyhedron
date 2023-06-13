@@ -28,7 +28,11 @@ for N in [Float64]
     end
 
     @testset "Emptiness Test" begin
-    
+        p = TropicalPolyhedron()
+        add_constraint!(p, [N(0)], N(-Inf), [N(-Inf)], N(1))
+        add_constraint!(p, [N(-Inf)], N(0), [N(0)], N(-Inf))
+        
+        @test is_empty(p) == false
     end
 
 
