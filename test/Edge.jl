@@ -1,4 +1,5 @@
 using Test
+include("../src/Node.jl")
 
 for T in [Float64]
 
