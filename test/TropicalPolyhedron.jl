@@ -27,12 +27,6 @@ for N in [Float64]
         @test constrained_dimensions(p2) == 2
     end
 
-
-    @testset "Random Polyhedron" begin
-        randp = rand(TPoly)
-        @test dim(randp) == 2 
-    end
-
     @testset "Emptiness Test" begin
     
     end

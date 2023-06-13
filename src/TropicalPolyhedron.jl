@@ -35,138 +35,6 @@ struct TropicalPolyhedron{T<:Real}
     end
 end
 
-# Convenience type 
-const TPoly{T} = TropicalPolyhedron{T}
-
-"""
-    dim(P::TPoly{T}) where {T<:Real}
-Return the dimension of a tropical polyhedron in matrix representation.
-### Input
-- `P`  -- tropical polyhedron in matrix representation
-### Output
-The dimension of the tropical polyhedron corresponds to the number of half-spaces used to define it.
-"""
-function dim(P::TPoly{T}) where {T<:Real}
-    dim_poly = size(P.A)[1]
-    return dim_poly
-end
-
-"""
-    constrained_dimensions(P::TPoly{T}) where {T<:Real}
-Return the dimension of the constraints, i.e the size of the elements to which the constraints are applied.
-### Input
-- `P`  -- tropical polyhedron in matrix representation
-### Output
-The dimension of the constraints. Outputs 0 if there is no constraint.
-"""
-function constrained_dimensions(P::TPoly{T}) where {T<:Real} 
-    size_vector = 0
-    try 
-        size_vector = size(P.A[1])[1]
-    catch 
-        size_vector = 0
-    end
-    return size_vector
-end
-
-"""
-    is_empty(P::TPoly{T}) where {T<:Real}   
-A tropical polyhedron is considered as empty if there is no constraint in its definition
-or if it's impossible to find an element in the space describing by the polyhedron.
-### Input
-- `P`  -- tropical polyhedron in matrix representation
-### Output
-``true`` if the tropical polyhedron is empty, ``false`` otherwise.
-"""
-function is_empty(P::TPoly{T}) where {T<:Real}
-    return dim(P) > 0 ? conflicting_constraints(P) : true
-end
-
-"""
-    add_constraint!(P::TPoly{T}, a::Vector{T}, b::T, c::Vector{T}, d::T) where {T<:Real}
-Add a constraint to a polyhedron. The constraint as given as 4 separated vectors.
-### Input
-- `P`  -- tropical polyhedron in matrix representation
-- `a`  -- vector of the weights of the new constraint on the "smaller than" side
-- `b`  -- bias of the new constraint on the "smaller than" side
-- `c`  -- vector of the weights of the new constraint on the "greater than" side
-- `d`  -- bias of the new constraint on the "greater than" side
-### Output
-The modified polyhedron.
-"""
-function add_constraint!(P::TPoly{T}, a::Vector{T}, b::T, c::Vector{T}, d::T) where {T<:Real}
-    if !is_empty(P) && length(a) != length(P.A[1])
-        error("new constraint should have the same number of coefficients that the current constraints")
-    else 
-        push!(P.A, a)
-        push!(P.B, b)
-        push!(P.C, c)
-        push!(P.D, d)
-    end
-end
-
-"""
-    remove_constraint!(P::TPoly{T}, index::Int) where {T<:Real}
-Remove a constraint from a polyhedron. 
-### Input
-- `P`  -- tropical polyhedron in matrix representation
-- `index` -- position of the constraint in the matrix representation
-### Output
-The polyhedron without the given constraint.
-"""
-function remove_constraint!(P::TPoly{T}, index::Int) where {T<:Real}
-    if index <= dim(P)[1]
-        deleteat!(P.A, index)
-        deleteat!(P.B, index)
-        deleteat!(P.C, index)
-        deleteat!(P.D, index)
-    end
-end
-
-"""
-    constraints_list(P::TPoly{T}) where {T<:Real}
-### Input
-- `P`  -- tropical polyhedron in matrix representation
-### Output
-The component matrices of the polyhedron.
-"""
-function constraints_list(P::TPoly{T}) where {T<:Real}
-    return P.A, P.B, P.C, P.D
-end
-
-"""
-    rand(::Type{TPoly{T}}; [T]::Type{<:Real}=Float64, [dim]::Int=2, [spacedim]::Int=2,
-         [rng]::AbstractRNG=RandomDevice(), [seed]::Union{Int, Nothing}=nothing)
-Create a random polyhedron.
-### Input
-- `TPoly` -- type for dispatch
-- `T`           -- (optional, default: `Float64`) numeric type
-- `dim`         -- (optional, default: 2) dimension of the polyhedron
-- `spacedim`    -- (optional, default: 2) dimension of the space where the elements are
-- `rng`         -- (optional, default: `RandomDevice()`) random number generator
-- `seed`        -- (optional, default: `nothing`) seed for reseeding
-### Output
-A random polyhedron in matrix representation.
-"""
-function rand(::Type{TPoly}; T::Type{<:Real}=Float64, dim::Int=2, spacedim::Int=2, rng::AbstractRNG=GLOBAL_RNG, seed::Union{Int, Nothing}=nothing)
-    rng = Random.seed!(rng, seed)
-    randpoly = TPoly{T}()
-    for _ in 1:dim
-        a = Vector{T}([])
-        c = Vector{T}([])
-        for _ in 1:spacedim
-            push!(a, Random.rand(rng, T))
-            push!(c, Random.rand(rng, T))
-        end
-        add_constraint!(randpoly, a, Random.rand(rng, T), c, Random.rand(rng, T))
-    end
-    return randpoly
-end
-
-
-
-
-
 """
 TROPICAL OPERATORS
 """
@@ -229,25 +97,155 @@ function tropical_product(x::Vector{T}, y::T) where {T<:Real}
     return return [(x[i] + y) for i = 1:size(x)[1]]
 end
 
-Base.:(==)(P::TPoly{T}, Q::TPoly{T}) where {T<:Real} = (P.A == Q.A) && (P.B == Q.B) && (P.C == Q.C) && (P.D == Q.D)
+"""
+    Base.:(==)(P::TropicalPolyhedron{T}, Q::TropicalPolyhedron{T}) where {T<:Real} 
+Overriding of the (==) operator for two elements of type TropicalPolyhedron. 
+Two tropical polyhedrons are equal if their list of constraints is the same.
+"""
+Base.:(==)(P::TropicalPolyhedron{T}, Q::TropicalPolyhedron{T}) where {T<:Real} = (P.A == Q.A) && (P.B == Q.B) && (P.C == Q.C) && (P.D == Q.D)
 
+"""
+FUNCTIONS
+"""
 
+"""
+    dim(P::TropicalPolyhedron{T}) where {T<:Real}
+Return the dimension of a tropical polyhedron in matrix representation.
+### Input
+- `P`  -- tropical polyhedron in matrix representation
+### Output
+The dimension of the tropical polyhedron corresponds to the number of half-spaces used to define it.
+"""
+function dim(P::TropicalPolyhedron{T}) where {T<:Real}
+    dim_poly = size(P.A)[1]
+    return dim_poly
+end
 
+"""
+    constrained_dimensions(P::TropicalPolyhedron{T}) where {T<:Real}
+Return the dimension of the constraints, i.e the size of the elements to which the constraints are applied.
+### Input
+- `P`  -- tropical polyhedron in matrix representation
+### Output
+The dimension of the constraints. Outputs 0 if there is no constraint.
+"""
+function constrained_dimensions(P::TropicalPolyhedron{T}) where {T<:Real} 
+    size_vector = 0
+    try 
+        size_vector = size(P.A[1])[1]
+    catch 
+        size_vector = 0
+    end
+    return size_vector
+end
 
+"""
+    is_empty(P::TropicalPolyhedron{T}) where {T<:Real}   
+A tropical polyhedron is considered as empty if there is no constraint in its definition
+or if it's impossible to find an element in the space describing by the polyhedron.
+### Input
+- `P`  -- tropical polyhedron in matrix representation
+### Output
+``true`` if the tropical polyhedron is empty, ``false`` otherwise.
+"""
+function is_empty(P::TropicalPolyhedron{T}) where {T<:Real}
+    return dim(P) > 0 ? conflicting_constraints(P) : true
+end
+
+"""
+    add_constraint!(P::TropicalPolyhedron{T}, a::Vector{T}, b::T, c::Vector{T}, d::T) where {T<:Real}
+Add a constraint to a polyhedron. The constraint as given as 4 separated vectors.
+### Input
+- `P`  -- tropical polyhedron in matrix representation
+- `a`  -- vector of the weights of the new constraint on the "smaller than" side
+- `b`  -- bias of the new constraint on the "smaller than" side
+- `c`  -- vector of the weights of the new constraint on the "greater than" side
+- `d`  -- bias of the new constraint on the "greater than" side
+### Output
+The modified polyhedron.
+"""
+function add_constraint!(P::TropicalPolyhedron{T}, a::Vector{T}, b::T, c::Vector{T}, d::T) where {T<:Real}
+    if !is_empty(P) && length(a) != length(P.A[1])
+        error("new constraint should have the same number of coefficients that the current constraints")
+    else 
+        push!(P.A, a)
+        push!(P.B, b)
+        push!(P.C, c)
+        push!(P.D, d)
+    end
+end
+
+"""
+    remove_constraint!(P::TropicalPolyhedron{T}, index::Int) where {T<:Real}
+Remove a constraint from a polyhedron. 
+### Input
+- `P`  -- tropical polyhedron in matrix representation
+- `index` -- position of the constraint in the matrix representation
+### Output
+The polyhedron without the given constraint.
+"""
+function remove_constraint!(P::TropicalPolyhedron{T}, index::Int) where {T<:Real}
+    if index <= dim(P)[1]
+        deleteat!(P.A, index)
+        deleteat!(P.B, index)
+        deleteat!(P.C, index)
+        deleteat!(P.D, index)
+    end
+end
+
+"""
+    constraints_list(P::TropicalPolyhedron{T}) where {T<:Real}
+### Input
+- `P`  -- tropical polyhedron in matrix representation
+### Output
+The component matrices of the polyhedron.
+"""
+function constraints_list(P::TropicalPolyhedron{T}) where {T<:Real}
+    return P.A, P.B, P.C, P.D
+end
+
+"""
+    rand(::Type{TropicalPolyhedron{T}}; [T]::Type{<:Real}=Float64, [dim]::Int=2, [spacedim]::Int=2,
+         [rng]::AbstractRNG=RandomDevice(), [seed]::Union{Int, Nothing}=nothing)
+Create a random polyhedron.
+### Input
+- `TropicalPolyhedron` -- type for dispatch
+- `T`           -- (optional, default: `Float64`) numeric type
+- `dim`         -- (optional, default: 2) dimension of the polyhedron
+- `spacedim`    -- (optional, default: 2) dimension of the space where the elements are
+- `rng`         -- (optional, default: `RandomDevice()`) random number generator
+- `seed`        -- (optional, default: `nothing`) seed for reseeding
+### Output
+A random polyhedron in matrix representation.
+"""
+function rand(::Type{TropicalPolyhedron}; T::Type{<:Real}=Float64, dim::Int=2, spacedim::Int=2, rng::AbstractRNG=GLOBAL_RNG, seed::Union{Int, Nothing}=nothing)
+    rng = Random.seed!(rng, seed)
+    randpoly = TropicalPolyhedron{T}()
+    for _ in 1:dim
+        a = Vector{T}([])
+        c = Vector{T}([])
+        for _ in 1:spacedim
+            push!(a, Random.rand(rng, T))
+            push!(c, Random.rand(rng, T))
+        end
+        add_constraint!(randpoly, a, Random.rand(rng, T), c, Random.rand(rng, T))
+    end
+    return randpoly
+end
 
 """
 SET OPERATIONS
 """
 
 """
-    copy(P::TPoly{T}) where {T<:Real}
+    copy(P::TropicalPolyhedron{T}) where {T<:Real}
 Make a copy of a tropical polyhedron, independent of it.
 ### Input
 - `P`  -- tropical polyhedron in matrix representation
 ### Output
 The copy of the polyhedron.
 """
-function copy(P::TPoly{T}) where {T<:Real}
+function copy(P::TropicalPolyhedron{T}) where {T<:Real}
     Z = TropicalPolyhedron()
     for i = 1:dim(P)[1]
         add_constraint!(Z, P.A[i], P.B[i], P.C[i], P.D[i])
@@ -256,7 +254,7 @@ function copy(P::TPoly{T}) where {T<:Real}
 end
 
 """
-    intersection(P::TPoly{T}, Q::TPoly{T}) where {T<:Real}
+    intersection(P::TropicalPolyhedron{T}, Q::TropicalPolyhedron{T}) where {T<:Real}
 Computes the intersection of 2 tropical polyhedrons. The function firstly
 concatenates the vectors of the representation, and then removes the redundant 
 constraints.
@@ -266,7 +264,7 @@ constraints.
 ### Output
 The intersection of the two polyhedrons.
 """
-function intersection(P::TPoly{T}, Q::TPoly{T}) where {T<:Real}
+function intersection(P::TropicalPolyhedron{T}, Q::TropicalPolyhedron{T}) where {T<:Real}
     if dim(P)[2] != dim(Q)[2]
         error("Constraints should be the same dimension")
     end
@@ -343,7 +341,7 @@ FUNCTIONS ON CONSTRAINTS
 """
 
 """
-    conflicting_constraints(P::TPoly{T}) where {T<:Real}
+    conflicting_constraints(P::TropicalPolyhedron{T}) where {T<:Real}
 A set of constraints are in conflict, if it is not possible to find an element within the described space.
 ### Input
 - `P`  -- tropical polyhedron in matrix representation
@@ -351,7 +349,7 @@ A set of constraints are in conflict, if it is not possible to find an element w
 `true` if there are conflicting constraints, `false` otherwise.
 Also returns `false` if the given polyhedron is empty.
 """
-function conflicting_constraints(P::TPoly{T}) where {T<:Real}
+function conflicting_constraints(P::TropicalPolyhedron{T}) where {T<:Real}
     if dim(P) >= 1
         return false
     end
@@ -361,7 +359,7 @@ function conflicting_constraints(P::TPoly{T}) where {T<:Real}
 end 
 
 """
-    remove_redundant_constraints(P::TPoly{T}) where {T<:Real}
+    remove_redundant_constraints(P::TropicalPolyhedron{T}) where {T<:Real}
 In a set of constraints, a constraint is said to be redundant if, when we remove it from the space definition,
 it is still satisfied.
 ### Input
@@ -369,7 +367,7 @@ it is still satisfied.
 ### Output
 A copy of the given polyhedron without the redundants constraints if there are. 
 """
-function remove_redundant_constraints(P::TPoly{T}) where {T<:Real}
+function remove_redundant_constraints(P::TropicalPolyhedron{T}) where {T<:Real}
     Pcop = copy(P)
     if is_empty(Pcop)
         return Pcop
