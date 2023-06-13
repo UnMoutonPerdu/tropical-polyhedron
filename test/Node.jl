@@ -39,6 +39,7 @@ for N in [Float64]
         try
             n4 = Node(1.)
             n5 = Node(2)
+            add_edge!(n4, n5)
         catch e
             @test isa(e, MethodError) 
         end
