@@ -225,10 +225,13 @@ function is_empty(P::TropicalPolyhedron{T}) where {T<:Real}
         current_node = Int64(round(node_to_go))
         max_turn = !max_turn
     end
-    if (payoff/number_payments >= 1/(number_variables+1))
-        return true
-    else
+    println("Number of payments : ", number_payments)
+    println("Payoff : ", payoff)
+    println("Number of variables : ", number_variables+1)
+    if (payoff/number_payments > 0)
         return false
+    else
+        return true
     end 
 end
 

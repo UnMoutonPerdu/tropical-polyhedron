@@ -28,11 +28,26 @@ for N in [Float64]
     end
 
     @testset "Emptiness Test" begin
+
+        ## Tests on 1D polyhedrons
         p = TropicalPolyhedron()
+        q = TropicalPolyhedron()
         add_constraint!(p, [N(0)], N(-Inf), [N(-Inf)], N(1))
         add_constraint!(p, [N(-Inf)], N(0), [N(0)], N(-Inf))
+        add_constraint!(q, [N(0)], N(-Inf), [N(-Inf)], N(1))
+        add_constraint!(q, [N(-Inf)], N(2), [N(0)], N(-Inf))
         
         @test is_empty(p) == false
+        @test is_empty(q) == true
+
+        ## Test on 2D polyhedron
+        r = TropicalPolyhedron()
+        add_constraint!(r, [N(0), N(-Inf)], N(-Inf), [N(-Inf), N(-Inf)], N(1))
+        add_constraint!(r, [N(-Inf), N(-Inf)], N(0), [N(0), N(-Inf)], N(-Inf))
+        add_constraint!(r, [N(-Inf), N(0)], N(-Inf), [N(-Inf), N(-Inf)], N(1))
+        add_constraint!(r, [N(-Inf), N(-Inf)], N(0), [N(-Inf), N(0)], N(-Inf))
+
+        @test is_empty(r) == false
     end
 
 
