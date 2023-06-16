@@ -1,7 +1,6 @@
 using Test 
 include("../src/TropicalPolyhedron.jl")
 include("../src/Node.jl")
-include("../src/Edge.jl")
 
 for N in [Float64]
 
@@ -22,7 +21,7 @@ for N in [Float64]
         p1 = TropicalPolyhedron()
         p2 = TropicalPolyhedron([[N(1), N(2)]], [N(2)], [[N(1), N(2)]], [N(2)])
         @test dim(p1) == 0
-        @test constrained_dimensions(p1) == 0
+        @test constrained_dimensions(p1) == -1
         @test dim(p2) == 1
         @test constrained_dimensions(p2) == 2
     end
@@ -48,6 +47,12 @@ for N in [Float64]
         add_constraint!(r, [N(-Inf), N(-Inf)], N(0), [N(-Inf), N(0)], N(-Inf))
 
         @test is_empty(r) == false
+
+        ## Test on polyhedron with a node without any outgoing arcs
+        s = TropicalPolyhedron()
+        add_constraint!(s, [N(0)], N(-Inf), [N(-Inf)], N(3))
+
+        @test is_empty(s) == false
     end
 
 

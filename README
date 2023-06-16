@@ -1,3 +1,56 @@
 # TropicalPolyhedron
 
-TropicalPolyhedron is a library for dealing with TropicalPolyhedron. Currently, only the external representation is implemented.
+TropicalPolyhedron is a library for dealing with tropical polyhedrons. Currently, only the external representation is implemented.
+
+## Recall
+---
+
+A tropical polyhedron is defined externally by a set of $r$ constraints of the form :
+
+$$A \cdot x + B \leq C \cdot x + D$$
+
+where $x \in \mathbb{R}^d_{\max};\  A,\  C \in \mathbb{R}^{r\times d}_{\max}; \ B, \ D \in \mathbb{R}^{r}_{\max}$.
+
+## Usage
+---
+
+The structure of such polyhedrons is given below : 
+
+```
+struct TropicalPolyhedron{T<:Real}
+    A::Vector{Vector{T}}
+    B::Vector{T}
+    C::Vector{Vector{T}}
+    D::Vector{T}
+end
+```
+
+To create an empty tropical polyhedron `tpoly`, just write :
+
+```
+tpoly = TropicalPolyhedron()
+```
+
+If you already have the 4 components of the inequalities :
+
+```
+tpoly = TropicalPolyhedron(A, B, C, D)
+```
+
+To add a constraint :
+
+```
+#=
+    a::Vector{T}
+    b::T
+    c::Vector{T}
+    d::T
+=#
+add_constraint!(tpoly, a, b, c, d)
+```
+
+## References
+---
+To check the emptiness of a tropical polyhedron we use the algorithm described in :
+
+[1] **Tropical Fourier-Motzkin elimination, with an application to real-time verification.** Xavier Allamigeon, Uli Fahrenberg, Stéphane Gaubert, Ricardo D. Katz, Axel Legay. (2013). p.15-20. [doi: 10.1142/S0218196714500258](https://doi.org/10.1142/S0218196714500258), [arXiv: 1308.2122](https://arxiv.org/abs/1308.2122).

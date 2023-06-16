@@ -7,14 +7,12 @@ using JuMP, Ipopt
 
 """
     TropicalPolyhedron{T<:Real} 
-Type that represents a tropical polyhedron in matrix representation, that is,
-a finite intersection of tropical half-spaces defined as the classical ones but in 
-a tropical algebra. 
+Type that represents a tropical polyhedron by external representation (refer to README). 
 ### Fields
-- `A` -- Vector of vector of weights on the "smaller than" side.
-- `B` -- Vector of bias on the "smaller than" side.
-- `C` -- Vector of vector of coefficients on the "greater than" side.
-- `D` -- Vector of bias on the "greater than" side.
+- `A` -- vector of vector of weights on the "smaller than" side.
+- `B` -- vector of bias on the "smaller than" side.
+- `C` -- vector of vector of coefficients on the "greater than" side.
+- `D` -- vector of bias on the "greater than" side.
 """
 struct TropicalPolyhedron{T<:Real}
     A::Vector{Vector{T}}
@@ -45,8 +43,6 @@ Definition of the tropical addition operator.
 ### Input
 - `x`  -- a vector of elements of type T
 - `y` -- a vector of elements of type T
-### Output
-The vector of results of the operation element by element.
 """
 function tropical_sum(x::Vector{T}, y::Vector{T}) where {T<:Real}
     if size(x)[1] != size(y)[1]
@@ -61,8 +57,6 @@ Definition of the tropical addition operator.
 ### Input
 - `x`  -- a vector of elements of type T
 - `y` -- an element of type T
-### Output
-The vector of results of the operation element by element.
 """
 function tropical_sum(x::Vector{T}, y::T) where {T<:Real}
     return [max(x[i], y) for i = 1:size(x)[1]]
@@ -74,8 +68,6 @@ Definition of the tropical product operator.
 ### Input
 - `x`  -- a vector of elements of type T
 - `y` -- a vector of elements of type T
-### Output
-The vector of results of the operation element by element.
 """
 function tropical_product(x::Vector{T}, y::Vector{T}) where {T<:Real}
     if size(x)[1] != size(y)[1]
@@ -90,8 +82,6 @@ Definition of the tropical product operator.
 ### Input
 - `x`  -- a vector of elements of type T
 - `y` -- an element of type T
-### Output
-The vector of results of the operation element by element.
 """
 function tropical_product(x::Vector{T}, y::T) where {T<:Real}
     return return [(x[i] + y) for i = 1:size(x)[1]]
@@ -99,7 +89,7 @@ end
 
 """
     Base.:(==)(P::TropicalPolyhedron{T}, Q::TropicalPolyhedron{T}) where {T<:Real} 
-Overriding of the (==) operator for two elements of type TropicalPolyhedron. 
+Overriding of the (==) operator for two elements of type `TropicalPolyhedron`. 
 Two tropical polyhedrons are equal if their list of constraints is the same.
 """
 Base.:(==)(P::TropicalPolyhedron{T}, Q::TropicalPolyhedron{T}) where {T<:Real} = (P.A == Q.A) && (P.B == Q.B) && (P.C == Q.C) && (P.D == Q.D)
@@ -110,142 +100,52 @@ FUNCTIONS
 
 """
     dim(P::TropicalPolyhedron{T}) where {T<:Real}
-Return the dimension of a tropical polyhedron in matrix representation.
+Return the dimension of a tropical polyhedron which corresponds to the number of constraints.
 ### Input
-- `P`  -- tropical polyhedron in matrix representation
-### Output
-The dimension of the tropical polyhedron corresponds to the number of half-spaces used to define it.
+- `P`  -- a tropical polyhedron.
 """
 function dim(P::TropicalPolyhedron{T}) where {T<:Real}
-    dim_poly = size(P.A)[1]
-    return dim_poly
+    return size(P.A)[1]
 end
 
 """
     constrained_dimensions(P::TropicalPolyhedron{T}) where {T<:Real}
-Return the dimension of the constraints, i.e the size of the elements to which the constraints are applied.
+Return the dimension of the space where the constrained elements are.
 ### Input
-- `P`  -- tropical polyhedron in matrix representation
+- `P`  -- a tropical polyhedron.
 ### Output
-The dimension of the constraints. Outputs 0 if there is no constraint.
+Returns `-1` if there are no constraints.
 """
 function constrained_dimensions(P::TropicalPolyhedron{T}) where {T<:Real} 
     size_vector = 0
     try 
         size_vector = size(P.A[1])[1]
     catch 
-        size_vector = 0
+        size_vector = -1
     end
     return size_vector
 end
 
 """
-    is_empty(P::TropicalPolyhedron{T}) where {T<:Real}   
-A tropical polyhedron is considered as empty if there is no constraint in its definition
-or if it's impossible to find an element in the space describing by the polyhedron.
+    constraints_list(P::TropicalPolyhedron{T}) where {T<:Real}
 ### Input
-- `P`  -- tropical polyhedron in matrix representation
+- `P`  -- a tropical polyhedron.
 ### Output
-``true`` if the tropical polyhedron is empty, ``false`` otherwise.
+The component matrices of the polyhedron.
 """
-function is_empty(P::TropicalPolyhedron{T}) where {T<:Real}
-    number_constraints = dim(P)
-    number_variables = constrained_dimensions(P)
-    if number_constraints == 0 || number_variables == 0
-        return true
-    end 
-    number_nodes = number_constraints+number_variables+1
-    A, B, C, D = constraints_list(P)
-
-    nodes = Vector{Node{T}}([])
-    nodes_seen = Vector([false for _ in 1:number_nodes])
-
-    for i in 1:number_nodes
-        push!(nodes, Node(T(i)))
-    end
-
-    for i in 1:number_constraints
-        for j in 1:number_variables
-            add_edge!(nodes[i], nodes[j+number_constraints], C[i][j])
-            add_edge!(nodes[i], nodes[number_nodes], D[i])
-            add_edge!(nodes[j+number_constraints], nodes[i], -A[i][j])
-            add_edge!(nodes[number_nodes], nodes[i], -B[i])
-        end
-    end
-
-    cycle_found = false
-    max_turn = false
-    current_node = number_nodes
-    number_payments = 0
-    payoff = 0
-
-    for i in 1:number_nodes
-        println("Node : ", i)
-        println("List of linked nodes : ", get_linked_nodes(nodes[i]))
-    end
-
-    while !cycle_found
-        println("Current node : ", current_node)
-        println("List of linked nodes : ", get_linked_nodes(nodes[current_node]))
-        if nodes_seen[current_node]
-            println("Cycle found")
-            cycle_found = true
-            break
-        else 
-            nodes_seen[current_node] = true
-        end
-        
-        node_to_go = 0
-        if max_turn 
-            value = -Inf
-        else 
-            value = +Inf 
-        end
-
-        if number_outgoing_arcs(nodes[current_node]) == 0
-            println("Stuck")
-            break
-        end
-
-        for k in keys(get_linked_nodes(nodes[current_node]))
-            if max_turn 
-                if get_linked_nodes(nodes[current_node])[k] > value 
-                    value = get_linked_nodes(nodes[current_node])[k]
-                    node_to_go = k 
-                end
-            else 
-                if get_linked_nodes(nodes[current_node])[k] < value 
-                    value = get_linked_nodes(nodes[current_node])[k]
-                    node_to_go = k 
-                end
-            end
-        end
-        number_payments += 1
-        payoff += value 
-        current_node = Int64(round(node_to_go))
-        max_turn = !max_turn
-    end
-    println("Number of payments : ", number_payments)
-    println("Payoff : ", payoff)
-    println("Number of variables : ", number_variables+1)
-    if (payoff/number_payments > 0)
-        return false
-    else
-        return true
-    end 
+function constraints_list(P::TropicalPolyhedron{T}) where {T<:Real}
+    return P.A, P.B, P.C, P.D
 end
 
 """
     add_constraint!(P::TropicalPolyhedron{T}, a::Vector{T}, b::T, c::Vector{T}, d::T) where {T<:Real}
-Add a constraint to a polyhedron. The constraint as given as 4 separated vectors.
+Add a constraint to a given polyhedron.
 ### Input
-- `P`  -- tropical polyhedron in matrix representation
+- `P`  -- a tropical polyhedron.
 - `a`  -- vector of the weights of the new constraint on the "smaller than" side
 - `b`  -- bias of the new constraint on the "smaller than" side
 - `c`  -- vector of the weights of the new constraint on the "greater than" side
 - `d`  -- bias of the new constraint on the "greater than" side
-### Output
-The modified polyhedron.
 """
 function add_constraint!(P::TropicalPolyhedron{T}, a::Vector{T}, b::T, c::Vector{T}, d::T) where {T<:Real}
     if dim(P) > 0 && length(a) != constrained_dimensions(P)
@@ -262,8 +162,8 @@ end
     remove_constraint!(P::TropicalPolyhedron{T}, index::Int) where {T<:Real}
 Remove a constraint from a polyhedron. 
 ### Input
-- `P`  -- tropical polyhedron in matrix representation
-- `index` -- position of the constraint in the matrix representation
+- `P`  -- a tropical polyhedron.
+- `index` -- position of the constraint in the matrix representation.
 ### Output
 The polyhedron without the given constraint.
 """
@@ -277,14 +177,132 @@ function remove_constraint!(P::TropicalPolyhedron{T}, index::Int) where {T<:Real
 end
 
 """
-    constraints_list(P::TropicalPolyhedron{T}) where {T<:Real}
+    is_empty(P::TropicalPolyhedron{T}) where {T<:Real}   
+A tropical polyhedron is considered as empty if there is no constraint in its definition
+or if it's impossible to find an element in the space describing by the polyhedron. Please refer to the 'References' section of the README file.
 ### Input
-- `P`  -- tropical polyhedron in matrix representation
+- `P`  -- a tropical polyhedron.
+- `silent` -- set to false to get some logs on the game.
 ### Output
-The component matrices of the polyhedron.
+``true`` if the tropical polyhedron is empty, ``false`` otherwise.
 """
-function constraints_list(P::TropicalPolyhedron{T}) where {T<:Real}
-    return P.A, P.B, P.C, P.D
+function is_empty(P::TropicalPolyhedron{T}, silent::Bool=true) where {T<:Real}
+    number_constraints = dim(P)
+    number_variables = constrained_dimensions(P)
+    if number_constraints == 0
+        return true
+    end 
+    number_nodes = number_constraints+number_variables+1
+    A, B, C, D = constraints_list(P)
+
+    nodes = Vector{Node{T}}([])
+    # We will store a boolean for each node to keep track of whether we've seen them.
+    nodes_seen = Vector([false for _ in 1:number_nodes])
+    # When we meet a new node, we store the value of the payoff.
+    nodes_score = Vector([0 for _ in 1:number_nodes])
+
+    for i in 1:number_nodes
+        push!(nodes, Node(i, T))
+    end
+
+    for i in 1:number_constraints
+        for j in 1:number_variables
+            if C[i][j] != T(-Inf) 
+                add_connection!(nodes[i], nodes[j+number_constraints], C[i][j])
+            end
+            if D[i] != T(-Inf)
+                add_connection!(nodes[i], nodes[number_nodes], D[i])
+            end
+            if A[i][j] != T(-Inf)
+                add_connection!(nodes[j+number_constraints], nodes[i], -A[i][j])
+            end
+            if B[i] != T(-Inf)
+                add_connection!(nodes[number_nodes], nodes[i], -B[i])
+            end
+        end
+    end
+
+    # Parameters of the mean-payoff game
+    cycle_found = false
+    max_player_turn = false
+    current_node = number_nodes
+    number_payments = 0
+    payoff = 0
+
+    if !silent 
+        println("GAME SETUP\n")
+        for i in 1:number_nodes
+            println("Node : ", i)
+            println("List of linked nodes : ", get_connections(nodes[i]))
+        end
+        println("\nGAME START\n")
+    end
+
+    while !cycle_found
+        if !silent 
+            println("Current node : ", current_node)
+            println("List of linked nodes : ", get_connections(nodes[current_node]))
+        end
+
+        if nodes_seen[current_node]
+            if !silent
+                println("END OF THE GAME : Cycle found")
+            end
+            cycle_found = true
+            payoff -= nodes_score[current_node]
+            break
+        else 
+            nodes_seen[current_node] = true
+            nodes_score[current_node] = payoff
+        end
+        
+        node_to_go = 0
+        if max_player_turn 
+            value = -Inf
+        else 
+            value = +Inf 
+        end
+
+        if number_connections(nodes[current_node]) == 0
+            if !silent
+                println("END OF THE GAME : No outgoing arcs")
+            end
+
+            payoff += T(Inf)
+            break
+        end
+
+        for k in keys(get_connections(nodes[current_node]))
+            if max_player_turn 
+                if get_connections(nodes[current_node])[k] > value 
+                    value = get_connections(nodes[current_node])[k]
+                    node_to_go = k 
+                end
+            else 
+                if get_connections(nodes[current_node])[k] < value 
+                    value = get_connections(nodes[current_node])[k]
+                    node_to_go = k 
+                end
+            end
+        end
+        number_payments += 1
+        payoff += value 
+        current_node = node_to_go
+        max_player_turn = !max_player_turn
+    end
+    println
+
+    if !silent
+        println("Number of payments : ", number_payments)
+        println("Payoff : ", payoff)
+        println("Number of variables : ", number_variables+1)
+    end
+
+    if (payoff/number_payments > 0)
+        return false
+    else
+        return true
+    end 
 end
 
 """
