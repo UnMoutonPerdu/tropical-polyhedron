@@ -2,75 +2,74 @@ import Base
 
 """
     Node{T<:Real} 
-Type that represents a node which is defined by its value and the other nodes to which it is linked.
+Type that represents a node which is defined by an Identifier (an Int64) and the other nodes to which it is linked.
 ### Fields
-- `val` -- Value of the node.
-- `linked_nodes` -- Vector of nodes to which the node is linked.
+- `id` -- Identifier of the node.
+- `connections` -- Dictionnary of linked nodes. The keys are the identifiers of the nodes to which it is linked. The values are the weights of the connections. 
 """
 struct Node{T<:Real} 
-    val::T
-    linked_nodes::Dict{T, T}
+    id::Int64
+    connections::Dict{Int64, T}
 
-    function Node(val::T, linked_nodes::Dict{T, T}) where {T<:Real}
-        return new{T}(val, linked_nodes)
+    function Node(id::Int64, connections::Dict{Int64, T}) where {T<:Real}
+        return new{T}(id, connections)
     end
 
-    function Node(val::T) where {T<:Real}
-        return new{T}(val, Dict{T, T}())
-    end
-
-    function Node{T}() where {T<:Real}
-        return new{T}(T(0), Dict{T, T}())
-    end
-
-    function Node()
-        return Node{Float64}()
+    function Node(id::Int64, ::Type{T}) where {T<:Real}
+        return new{T}(id, Dict{Int64, T}())
     end
 end
 
 """
     Base.:(==)(N::Node{T}, M::Node{T}) where {T<:Real} 
 Overriding of the (==) operator for two elements of type Node. 
-Two nodes are equal if their value is the same. If so, we check if their list of linked nodes is of the same size.
+Two nodes are equal if their identifier is the same. If so, we check if they have the same number of connections.
 """
-Base.:(==)(N::Node{T}, M::Node{T}) where {T<:Real} = (get_value(N) == get_value(M)) && (length(get_linked_nodes(N)) == length(get_linked_nodes(M)))
+Base.:(==)(N::Node{T}, M::Node{T}) where {T<:Real} = (get_id(N) == get_id(M)) && (length(get_connections(N)) == length(get_connections(M)))
 
 """
-    get_value(node::Node{T}) where {T<:Real}
+    get_id(node::Node{T}) where {T<:Real}
 ### Input
 - `node`  -- A node.
 ### Output
-The value of this node.
+The identifier of the node.
 """
-function get_value(node::Node{T}) where {T<:Real}
-    return node.val
+function get_id(node::Node{T}) where {T<:Real}
+    return node.id
 end
 
 """
-    get_linked_nodes(node::Node{T}) where {T<:Real}
+    get_connections(node::Node{T}) where {T<:Real}
 ### Input
 - `node`  -- A node.
 ### Output
-The vector of nodes to which the node is linked.
+The dictionnary of connections.
 """
-function get_linked_nodes(node::Node{T}) where {T<:Real}
-    return node.linked_nodes
+function get_connections(node::Node{T}) where {T<:Real}
+    return node.connections
 end 
 
 """
-    add_edge!(node::Node{T}, other::Node{T}, weight::T) where {T<:Real}
-Add a node to the list of nodes linked to the first.
+    add_connection!(node::Node{T}, other::Node{T}, weight::T) where {T<:Real}
+Add a connection to the `other` node with the given `weight` to the dictionnary of the first given node.
 ### Input
-- `node`  -- the node to which we add a link.
-- `other`  -- the added node.
-- `weight`  -- the weight of the new edge.
+- `node`  -- the node to which we add a connection.
+- `other`  -- the new connected node.
+- `weight`  -- the weight of the new connection.
 ### Output
-Nothing but modifies the list of linked nodes of the first node given as an argument.
+Nothing but modifies the dictionnary of connections of the first node given as an argument.
 """
-function add_edge!(node::Node{T}, other::Node{T}, weight::T) where {T<:Real}
-    node.linked_nodes[get_value(other)] = weight
+function add_connection!(node::Node{T}, other::Node{T}, weight::T) where {T<:Real}
+    node.connections[get_id(other)] = weight
 end
 
-function number_outgoing_arcs(node::Node{T}) where {T<:Real}
-    return length(get_linked_nodes(node))
+"""
+    number_connections(node::Node{T}) where {T<:Real}
+### Input
+- `node`  -- A node.
+### Output
+The length of the dictionnary of connections.
+"""
+function number_connections(node::Node{T}) where {T<:Real}
+    return length(get_connections(node))
 end
