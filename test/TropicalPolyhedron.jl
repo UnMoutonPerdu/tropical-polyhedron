@@ -26,6 +26,24 @@ for N in [Float64]
         @test constrained_dimensions(p2) == 2
     end
 
+    @testset "Add and Remove constraints" begin
+        p = TropicalPolyhedron()
+        add_constraint!(p, [N(0)], N(0), [N(0)], N(0))
+        @test dim(p) == 1
+        remove_constraint!(p, 1)
+        @test dim(p) == 0
+    end
+
+    @testset "Copy of Polyhedron" begin
+        p = TropicalPolyhedron()
+        add_constraint!(p, [N(0)], N(0), [N(0)], N(0))
+        q = copy(p)
+        @test p == q
+        remove_constraint!(q, 1)
+        @test dim(p) == 1
+        @test dim(q) == 0
+    end
+
     @testset "Emptiness Test" begin
 
         ## Tests on 1D polyhedrons
