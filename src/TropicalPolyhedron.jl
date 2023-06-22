@@ -296,6 +296,7 @@ function is_empty(P::TropicalPolyhedron{T}, silent::Bool=true) where {T<:Real}
         println("Number of payments : ", number_payments)
         println("Payoff : ", payoff)
         println("Number of variables : ", number_variables+1)
+        println("Value : ", payoff/number_payments)
     end
 
     if (payoff/number_payments > 0)
@@ -352,6 +353,39 @@ function intersection(P::TropicalPolyhedron{T}, Q::TropicalPolyhedron{T}) where 
     return P
 end
 
-function is_redundant(P::TropicalPolyhedron{T}, a::Vector{T}, b::T, c::Vector{T}, d::T) where {T<:Real}
+function is_redundant(P::TropicalPolyhedron{T}, a::Vector{T}, b::T, c::Vector{T}, d::T, silent::Bool=true) where {T<:Real}
+    Z = copy(P)
+    size = length(a)
+    e = Vector([T(-Inf) for _ in 1:size])
+    f = Vector([T(-Inf) for _ in 1:size])
+    g = T(-Inf)
+    h = T(-Inf)
 
+    eps = T(1e-9)
+
+    for i = 1:size
+        if c[i] == T(Inf)
+            e[i] = 0
+            add_constraint!(Z, deepcopy(e), g, f, h)
+            e[i] = T(-Inf)
+        else
+            e[i] = c[i]
+            println(a)
+            println(eps)
+            add_constraint!(Z, deepcopy(e), g, deepcopy(a).-eps, deepcopy(b).-eps)
+            e[i] = T(-Inf)
+        end
+    end
+
+    if d == T(Inf)
+        println("MUGEN")
+        return true
+    else
+        add_constraint!(Z, e, d, deepcopy(a).-eps, deepcopy(b).-eps)
+    end
+
+    println(Z)
+
+    println("Test EMPTY")
+    return is_empty(Z, silent)
 end

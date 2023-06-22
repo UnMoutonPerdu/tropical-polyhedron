@@ -44,7 +44,7 @@ for N in [Float64]
         @test dim(q) == 0
     end
 
-    @testset "Emptiness Test" begin
+    @testset "Emptiness Tests" begin
 
         ## Tests on 1D polyhedrons
         p = TropicalPolyhedron()
@@ -71,6 +71,22 @@ for N in [Float64]
         add_constraint!(s, [N(0)], N(-Inf), [N(-Inf)], N(3))
 
         @test is_empty(s) == false
+    end
+
+    @testset "Redundancy Tests" begin
+        p = TropicalPolyhedron()
+        a, b, c, d = [N(1)], N(1), [N(2)], N(1)
+
+        @test is_redundant(p, a, b, c, d, false) == true
+
+        a, b, c, d = [N(-Inf)], N(0), [N(0)], N(-Inf)
+
+        @test is_redundant(p, a, b, c, d, false) == false
+
+        add_constraint!(p, a, b, c, d)
+        e, f, g, h = [N(-Inf)], N(-2), [N(0)], N(-Inf)
+
+        @test is_redundant(p, e, f, g, h, false) == true
     end
 
 
