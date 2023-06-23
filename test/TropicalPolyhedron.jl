@@ -1,6 +1,6 @@
 using Test 
-include("../src/TropicalPolyhedron.jl")
 include("../src/Node.jl")
+include("../src/TropicalPolyhedron.jl")
 
 for N in [Float64]
 

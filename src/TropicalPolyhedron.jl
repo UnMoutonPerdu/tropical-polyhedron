@@ -2,9 +2,6 @@ import Base, Random, JuMP, Ipopt
 using Random: AbstractRNG, GLOBAL_RNG
 using JuMP, Ipopt
 
-#TODO Add the export part
-
-
 """
     TropicalPolyhedron{T<:Real} 
 Type that represents a tropical polyhedron by external representation (refer to README). 
@@ -240,6 +237,21 @@ function is_empty(P::TropicalPolyhedron{T}, silent::Bool=true) where {T<:Real}
     return !is_winning_state(nodes, nodes_seen, nodes_score, payoff, number_payments, max_player_turn, current_node, silent)
 end
 
+"""
+    is_winning_state(nodes::Vector{Node{T}}, seen::Vector{Bool}, scores::Vector{T}, init_payoff::T, payments::Int64, turn::Bool, current::Int64, silent::Bool=true) where {T<:Real} 
+Function only used for the algorithm checking the emptiness of a tropical polyhedron. The function emulates one game turn.
+### Input
+- `nodes` -- list of nodes of the graph
+- `seen` -- list of already visited nodes
+- `score` -- list of payoff of already visited nodes
+- `init_payoff` -- payoff at the beginning of the turn
+- `payments` -- number of payments at the beginning of the turn
+- `turn` -- boolean allowing to know which player have to player
+- `current` -- node where we are at the beginning of the turn
+- `silent` -- set to false to get some logs on the game.
+### Output
+``true`` if the path followed leads to a winning state, ``false`` otherwise.
+"""
 function is_winning_state(nodes::Vector{Node{T}}, seen::Vector{Bool}, scores::Vector{T}, init_payoff::T, payments::Int64, turn::Bool, current::Int64, silent::Bool=true) where {T<:Real}
     max_player_turn = turn
     current_node = current
