@@ -96,7 +96,7 @@ for N in [Float64]
         add_constraint!(r, [N(-Inf), N(-Inf)], N(0), [N(-Inf), N(0)], N(-Inf))
 
         a, b, c, d = [N(-Inf), N(-Inf)], N(-2), [N(0), N(-Inf)], N(-Inf)
-        @test is_redundant(r, a, b, c, d, false) == true
+        @test is_redundant(r, a, b, c, d) == true
 
         a, b, c, d = [N(-Inf), N(-Inf)], N(0.5), [N(-Inf), N(0)], N(-Inf)
         @test is_redundant(r, a, b, c, d) == false

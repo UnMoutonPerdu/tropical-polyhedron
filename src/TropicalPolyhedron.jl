@@ -199,7 +199,7 @@ function is_empty(P::TropicalPolyhedron{T}, silent::Bool=true) where {T<:Real}
     # We will store a boolean for each node to keep track of whether we've seen them.
     nodes_seen = Vector([false for _ in 1:number_nodes])
     # When we meet a new node, we store the value of the payoff.
-    nodes_score = Vector([0 for _ in 1:number_nodes])
+    nodes_score = Vector([T(0) for _ in 1:number_nodes])
 
     for i in 1:number_nodes
         push!(nodes, Node(i, T))
@@ -223,11 +223,10 @@ function is_empty(P::TropicalPolyhedron{T}, silent::Bool=true) where {T<:Real}
     end
 
     # Parameters of the mean-payoff game
-    cycle_found = false
     max_player_turn = false
     current_node = number_nodes
     number_payments = 0
-    payoff = 0
+    payoff = T(0)
 
     if !silent 
         println("GAME SETUP\n")
@@ -238,72 +237,98 @@ function is_empty(P::TropicalPolyhedron{T}, silent::Bool=true) where {T<:Real}
         println("\nGAME START\n")
     end
 
-    while !cycle_found
-        if !silent 
-            println("Current node : ", current_node)
-            println("List of linked nodes : ", get_connections(nodes[current_node]))
-        end
+    return !is_winning_state(nodes, nodes_seen, nodes_score, payoff, number_payments, max_player_turn, current_node, silent)
+end
 
-        if nodes_seen[current_node]
-            if !silent
-                println("END OF THE GAME : Cycle found")
-            end
-            cycle_found = true
-            payoff -= nodes_score[current_node]
-            break
-        else 
-            nodes_seen[current_node] = true
-            nodes_score[current_node] = payoff
-        end
-        
-        node_to_go = 0
-        if max_player_turn 
-            value = -Inf
-        else 
-            value = +Inf 
-        end
+function is_winning_state(nodes::Vector{Node{T}}, seen::Vector{Bool}, scores::Vector{T}, init_payoff::T, payments::Int64, turn::Bool, current::Int64, silent::Bool=true) where {T<:Real}
+    max_player_turn = turn
+    current_node = current
+    number_payments = payments
+    payoff = init_payoff
 
-        if number_connections(nodes[current_node]) == 0
-            if !silent
-                println("END OF THE GAME : No outgoing arcs")
-            end
+    multiple_choices = Vector{Int64}([])
 
-            payoff += T(Inf)
-            break
-        end
-
-        for k in keys(get_connections(nodes[current_node]))
-            if max_player_turn 
-                if get_connections(nodes[current_node])[k] > value 
-                    value = get_connections(nodes[current_node])[k]
-                    node_to_go = k 
-                end
-            else 
-                if get_connections(nodes[current_node])[k] < value 
-                    value = get_connections(nodes[current_node])[k]
-                    node_to_go = k 
-                end
-            end
-        end
-        number_payments += 1
-        payoff += value 
-        current_node = node_to_go
-        max_player_turn = !max_player_turn
-    end
-    println
-
-    if !silent
-        println("Number of payments : ", number_payments)
-        println("Payoff : ", payoff)
-        println("Number of variables : ", number_variables+1)
-        println("Value : ", payoff/number_payments)
+    if !silent 
+        println("Current node : ", current_node)
+        println("List of linked nodes : ", get_connections(nodes[current_node]))
     end
 
-    if (payoff/number_payments > 0)
-        return false
-    else
+    ## Checking whether we have a cycle
+    if seen[current_node]
+        if !silent
+            println("END OF THE GAME : Cycle found")
+        end
+        payoff -= scores[current_node]
+
+        if !silent
+            println("Number of payments : ", number_payments)
+            println("Payoff : ", payoff)
+            println("Value : ", payoff/number_payments)
+        end
+    
+        if (payoff/number_payments > 0)
+            return true
+        else
+            return false
+        end
+    else 
+        seen[current_node] = true
+        scores[current_node] = payoff
+    end
+    
+    node_to_go = -1
+    if max_player_turn 
+        value = -Inf
+    else 
+        value = +Inf 
+    end
+
+    ## Checking whether we have at least one outgoing arc
+    if number_connections(nodes[current_node]) == 0
+        if !silent
+            println("END OF THE GAME : No outgoing arcs")
+        end
         return true
-    end 
+    end
+
+    for k in keys(get_connections(nodes[current_node]))
+        if max_player_turn 
+            if get_connections(nodes[current_node])[k] > value 
+                multiple_choices = empty(multiple_choices)
+                value = get_connections(nodes[current_node])[k]
+                node_to_go = k 
+            elseif get_connections(nodes[current_node])[k] == value 
+                push!(multiple_choices, k)
+            end
+        else 
+            if get_connections(nodes[current_node])[k] < value 
+                multiple_choices = empty(multiple_choices)
+                value = get_connections(nodes[current_node])[k]
+                node_to_go = k 
+            elseif get_connections(nodes[current_node])[k] == value 
+                push!(multiple_choices, k)
+            end
+        end
+    end
+    number_payments += 1
+    payoff += value 
+    max_player_turn = !max_player_turn
+
+    if !is_winning_state(nodes, seen, scores, payoff, number_payments, max_player_turn, node_to_go, silent)
+        return false
+    else 
+        num_neigh = length(multiple_choices)
+        if num_neigh == 0
+            return true
+        else
+            for i = 1:num_neigh
+                if !is_winning_state(nodes, seen, scores, payoff, number_payments, max_player_turn, multiple_choices[i], silent)
+                    return false
+                end
+            end
+            return true
+        end
+    end
 end
 
 """
@@ -394,7 +419,7 @@ function is_redundant(P::TropicalPolyhedron{T}, a::Vector{T}, b::T, c::Vector{T}
     if d == T(Inf) || d == T(-Inf)
         if d == T(Inf)
             return true
-        end        
+        end         
     else
         add_constraint!(Z, e, d, deepcopy(a).-eps, deepcopy(b).-eps)
     end
