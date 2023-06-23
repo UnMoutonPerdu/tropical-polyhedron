@@ -365,12 +365,23 @@ For each constraint in the second polyhedron, we test if it is redundant with re
 ### Input
 - `P`  -- tropical polyhedron in external representation.
 - `Q`  -- tropical polyhedron in external representation.
+- `silent` -- set to false to get some logs on the game.
 ### Output
 The intersection of the two polyhedrons.
 """
-function intersection(P::TropicalPolyhedron{T}, Q::TropicalPolyhedron{T}) where {T<:Real}
-    if dim(Q) == 0
-        return P
+function intersection(P::TropicalPolyhedron{T}, Q::TropicalPolyhedron{T}, silent::Bool=true) where {T<:Real}
+    if dim(P) == 0
+        if dim(Q) == 0
+            return TropicalPolyhedron()
+        else
+            for i = 1:dim(Q)
+                add_constraint!(P, Q.A[i], Q.B[i], Q.C[i], Q.D[i])
+            end
+        end
+    else
+        if dim(Q) == 0
+            return copy(P)
+        end
     end
 
     if constrained_dimensions(P) != constrained_dimensions(Q)
@@ -380,7 +391,7 @@ function intersection(P::TropicalPolyhedron{T}, Q::TropicalPolyhedron{T}) where 
     A, B, C, D = constraints_list(Q)
 
     for i = 1:dim(Q)    
-        if is_redundant(P, A[i], B[i], C[i], D[i])
+        if is_redundant(P, A[i], B[i], C[i], D[i], silent)
             continue
         else 
             add_constraint!(P, A[i], B[i], C[i], D[i])
