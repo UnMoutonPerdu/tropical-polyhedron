@@ -75,18 +75,31 @@ for N in [Float64]
 
     @testset "Redundancy Tests" begin
         p = TropicalPolyhedron()
+        ## Useless constraint
         a, b, c, d = [N(1)], N(1), [N(2)], N(1)
+        @test is_redundant(p, a, b, c, d) == true
 
-        @test is_redundant(p, a, b, c, d, false) == true
-
+        ## Constraint x >= 0
         a, b, c, d = [N(-Inf)], N(0), [N(0)], N(-Inf)
-
-        @test is_redundant(p, a, b, c, d, false) == false
-
+        @test is_redundant(p, a, b, c, d) == false
         add_constraint!(p, a, b, c, d)
-        e, f, g, h = [N(-Inf)], N(-2), [N(0)], N(-Inf)
 
-        @test is_redundant(p, e, f, g, h, false) == true
+        ## Constraint x >= -2 (redundants)
+        e, f, g, h = [N(-Inf)], N(-2), [N(0)], N(-Inf)
+        @test is_redundant(p, e, f, g, h) == true
+
+        ## Test on 2D polyhedron
+        r = TropicalPolyhedron()
+        add_constraint!(r, [N(0), N(-Inf)], N(-Inf), [N(-Inf), N(-Inf)], N(1))
+        add_constraint!(r, [N(-Inf), N(-Inf)], N(0), [N(0), N(-Inf)], N(-Inf))
+        add_constraint!(r, [N(-Inf), N(0)], N(-Inf), [N(-Inf), N(-Inf)], N(1))
+        add_constraint!(r, [N(-Inf), N(-Inf)], N(0), [N(-Inf), N(0)], N(-Inf))
+
+        a, b, c, d = [N(-Inf), N(-Inf)], N(-2), [N(0), N(-Inf)], N(-Inf)
+        @test is_redundant(r, a, b, c, d, false) == true
+
+        a, b, c, d = [N(-Inf), N(-Inf)], N(0.5), [N(-Inf), N(0)], N(-Inf)
+        @test is_redundant(r, a, b, c, d) == false
     end
 
 

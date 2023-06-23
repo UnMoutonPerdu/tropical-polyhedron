@@ -353,6 +353,20 @@ function intersection(P::TropicalPolyhedron{T}, Q::TropicalPolyhedron{T}) where 
     return P
 end
 
+"""
+    is_redundant(P::TropicalPolyhedron{T}, a::Vector{T}, b::T, c::Vector{T}, d::T, silent::Bool=true) where {T<:Real}   
+A tropical constraint is considered as redundant with respect to a tropical polyhedron P when all elements of P verify the constraint.
+Please refer to the 'References' section of the README file.
+### Input
+- `P`  -- a tropical polyhedron.
+- `a`  -- vector of the weights of the new constraint on the "smaller than" side
+- `b`  -- bias of the new constraint on the "smaller than" side
+- `c`  -- vector of the weights of the new constraint on the "greater than" side
+- `d`  -- bias of the new constraint on the "greater than" side
+- `silent` -- set to false to get some logs on the game.
+### Output
+``true`` if the tropical constraint is redundant, ``false`` otherwise.
+"""
 function is_redundant(P::TropicalPolyhedron{T}, a::Vector{T}, b::T, c::Vector{T}, d::T, silent::Bool=true) where {T<:Real}
     Z = copy(P)
     size = length(a)
@@ -368,24 +382,26 @@ function is_redundant(P::TropicalPolyhedron{T}, a::Vector{T}, b::T, c::Vector{T}
             e[i] = 0
             add_constraint!(Z, deepcopy(e), g, f, h)
             e[i] = T(-Inf)
+        elseif c[i] == T(-Inf)
+            continue
         else
             e[i] = c[i]
-            println(a)
-            println(eps)
             add_constraint!(Z, deepcopy(e), g, deepcopy(a).-eps, deepcopy(b).-eps)
             e[i] = T(-Inf)
         end
     end
 
-    if d == T(Inf)
-        println("MUGEN")
-        return true
+    if d == T(Inf) || d == T(-Inf)
+        if d == T(Inf)
+            return true
+        end        
     else
         add_constraint!(Z, e, d, deepcopy(a).-eps, deepcopy(b).-eps)
     end
 
-    println(Z)
+    if !silent 
+        println("Emptiness test on : ", Z)
+    end
 
-    println("Test EMPTY")
     return is_empty(Z, silent)
 end
