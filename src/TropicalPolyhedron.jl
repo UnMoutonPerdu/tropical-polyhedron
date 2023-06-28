@@ -156,7 +156,7 @@ function add_constraint!(P::TropicalPolyhedron{T}, a::Vector{T}, b::T, c::Vector
 end
 
 """
-    remove_constraint!(P::TropicalPolyhedron{T}, index::Int) where {T<:Real}
+    remove_constraint!(P::TropicalPolyhedron{T}, index::Int64) where {T<:Real}
 Remove a constraint from a polyhedron. 
 ### Input
 - `P`  -- a tropical polyhedron.
@@ -164,7 +164,7 @@ Remove a constraint from a polyhedron.
 ### Output
 The polyhedron without the given constraint.
 """
-function remove_constraint!(P::TropicalPolyhedron{T}, index::Int) where {T<:Real}
+function remove_constraint!(P::TropicalPolyhedron{T}, index::Int64) where {T<:Real}
     if index <= dim(P)[1]
         deleteat!(P.A, index)
         deleteat!(P.B, index)
