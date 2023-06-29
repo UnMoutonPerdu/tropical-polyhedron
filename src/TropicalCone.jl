@@ -66,7 +66,7 @@ function tropical_product(x::Vector{T}, y::Vector{T}) where {T<:Real}
     if size(x)[1] != size(y)[1]
         error("Vectors must have the same size : $(size(x)[1]) != $(size(y)[1])")
     end
-    return return [(x[i] + y[i]) for i = 1:size(x)[1]]
+    return maximum([x[i] + y[i] for i in 1:size(x)[1]])
 end
 
 """
@@ -76,8 +76,8 @@ Definition of the tropical product operator.
 - `x`  -- a vector of elements of type T
 - `y` -- an element of type T
 """
-function tropical_product(x::Vector{T}, y::T) where {T<:Real}
-    return return [(x[i] + y) for i = 1:size(x)[1]]
+function tropical_product(y::T, x::Vector{T}) where {T<:Real}
+    return [(x[i] + y) for i = 1:size(x)[1]]
 end
 
 """
@@ -173,7 +173,6 @@ function compute_extreme(C::TropicalCone{T}, cone_dim::Int64, space_dim::Int64) 
         return extreme
     else
         G = compute_extreme(C, cone_dim-1, space_dim)
-        println("G : ", G)
         Gleq = Vector{Vector{T}}([])
         Gs = Vector{Vector{T}}([])
         for g in G
@@ -185,16 +184,10 @@ function compute_extreme(C::TropicalCone{T}, cone_dim::Int64, space_dim::Int64) 
         end
         H = deepcopy(Gleq)
 
-        println("a : ", C.A[cone_dim])
-        println("b : ", C.B[cone_dim])
-        println("H : ", H)
-        println("Gleq : ", Gleq)
-        println("Gs : ", Gs)
-
         for gleq in Gleq 
             for gs in Gs 
                 h = tropical_sum(tropical_product(tropical_product(C.A[cone_dim], gs), gleq), tropical_product(tropical_product(C.B[cone_dim], gleq), gs))
-                if is_extreme(h)
+                if is_extreme(h)    
                     first_non_zero = T(-Inf)
                     for elem in h
                         if elem != T(-Inf)
@@ -202,7 +195,7 @@ function compute_extreme(C::TropicalCone{T}, cone_dim::Int64, space_dim::Int64) 
                             break
                         end
                     end
-                    push!(H, tropical_product(h, first_non_zero))
+                    push!(H, tropical_product(first_non_zero, h))
                 end
             end
         end

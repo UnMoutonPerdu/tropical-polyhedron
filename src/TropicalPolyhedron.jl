@@ -70,7 +70,7 @@ function tropical_product(x::Vector{T}, y::Vector{T}) where {T<:Real}
     if size(x)[1] != size(y)[1]
         error("Vectors must have the same size : $(size(x)[1]) != $(size(y)[1])")
     end
-    return return [(x[i] + y[i]) for i = 1:size(x)[1]]
+    return maximum([x[i] + y[i] for i in 1:size(x)[1]])
 end
 
 """
@@ -80,8 +80,8 @@ Definition of the tropical product operator.
 - `x`  -- a vector of elements of type T
 - `y` -- an element of type T
 """
-function tropical_product(x::Vector{T}, y::T) where {T<:Real}
-    return return [(x[i] + y) for i = 1:size(x)[1]]
+function tropical_product(y::T, x::Vector{T}) where {T<:Real}
+    return [(x[i] + y) for i = 1:size(x)[1]]
 end
 
 """
