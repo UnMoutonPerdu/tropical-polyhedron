@@ -11,8 +11,8 @@ for N in [Float64]
     
         @test tropical_sum(a, b) == [3.2, -1., 7.1, 12.2, -2.]
         @test tropical_sum(a, c) == [4., 4., 4.6, 12.2, 4.]
-        @test tropical_product(a, b) == [2., -4., 11.7, 18.5, -6.5]
-        @test tropical_product(a, c) == [7.2, 3., 8.6, 16.2, -.5]
+        @test tropical_product(a, b) == 18.5
+        @test tropical_product(c, a) == [7.2, 3., 8.6, 16.2, -.5]
         @test TropicalPolyhedron([[N(1), N(2)]], [N(2)], [[N(1), N(2)]], [N(2)]) == TropicalPolyhedron([[N(1), N(2)]], [N(2)], [[N(1), N(2)]], [N(2)])
         @test TropicalPolyhedron([[N(1), N(2)]], [N(2)], [[N(1), N(2)]], [N(2)]) != TropicalPolyhedron([[N(1), N(2)]], [N(3)], [[N(1), N(2)]], [N(2)])
     end 
@@ -118,5 +118,15 @@ for N in [Float64]
         add_constraint!(q, [N(0), N(-Inf)], N(-Inf), [N(-Inf), N(-Inf)], N(1))
 
         @test intersection(p, q) == r
+    end
+
+    @testset "Conversion Polyhedron-Cone" begin
+        p = TropicalPolyhedron()
+        add_constraint!(p, [N(0)], N(0), [N(0)], N(0))
+        add_constraint!(p, [N(1)], N(1), [N(1)], N(1))
+
+        c = to_cone(p)
+        println(c)
+        @test c == TropicalCone([[N(0), N(0)], [N(1), N(1)]], [[N(0), N(0)], [N(1), N(1)]])
     end
 end

@@ -2,6 +2,8 @@ import Base, Random, JuMP, Ipopt
 using Random: AbstractRNG, GLOBAL_RNG
 using JuMP, Ipopt
 
+include("TropicalCone.jl")
+
 """
     TropicalPolyhedron{T<:Real} 
 Type that represents a tropical polyhedron by external representation (refer to README). 
@@ -452,4 +454,30 @@ function is_redundant(P::TropicalPolyhedron{T}, a::Vector{T}, b::T, c::Vector{T}
     end
 
     return is_empty(Z, silent)
+end
+
+
+"""
+GENERATORS
+"""
+
+function to_cone(P::TropicalPolyhedron{T}) where {T<:Real}
+     A = deepcopy(P.A)
+     B = deepcopy(P.C)
+     size = dim(P)
+     for i = 1:size
+        push!(A[i], P.B[i])
+        push!(B[i], P.D[i])
+     end
+     return TropicalCone(A, B)
+end
+
+function get_generators(P::TropicalPolyhedron{T}) where {T<:Real}
+    C = to_cone(P)
+    cone_gen = compute_extreme(C, dim(P), constrained_dimensions(P)+1)
+    pol_gen = []
+    for g in cone_gen
+        push!(pol_gen, g[1:constrained_dimensions(P)])
+    end
+    return pol_gen
 end

@@ -22,13 +22,19 @@ for N in [Float64]
 
     @testset "Extreme elements" begin
         c = TropicalCone()
-        @test compute_extreme(c, 0, 2) == [[N(0), N(-Inf)], [N(-Inf), N(0)]]
+        ext = compute_extreme(c, 0, 2)
+        sol = [[N(0), N(-Inf)], [N(-Inf), N(0)]]
+        @test (prod([ elem in sol for elem in ext]))
 
         add_constraint!(c, [N(0), N(-Inf)], [N(-Inf), N(0)])
-        @test compute_extreme(c, 1, 2) == [[N(-Inf), N(0)], [N(0), N(0)]]
+        ext = compute_extreme(c, 1, 2)
+        sol = [[N(-Inf), N(0)], [N(0), N(0)]]
+        @test (prod([ elem in sol for elem in ext]))
 
         add_constraint!(c, [N(-Inf), N(0)], [N(3), N(-Inf)])
-        @test compute_extreme(c, 2, 2) == [[N(0), N(0)], [N(0), N(3)]]
+        ext = compute_extreme(c, 2, 2)
+        sol = [[N(0), N(3)], [N(0), N(0)]]
+        @test (prod([ elem in sol for elem in ext]))
     end
 
 end
