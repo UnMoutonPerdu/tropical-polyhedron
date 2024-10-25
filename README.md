@@ -54,4 +54,5 @@ You can find more information in my research report in this same repository.
 For the algorithm checking the emptiness of a tropical polyhedron and for the one checking whether a tropical constraint is redundant with respect to a tropical polyhedron  :
 
 [1] **Tropical Fourier-Motzkin elimination, with an application to real-time verification.** Xavier Allamigeon, Uli Fahrenberg, Stéphane Gaubert, Ricardo D. Katz, Axel Legay. (2013). p.15-20. [doi: 10.1142/S0218196714500258](https://doi.org/10.1142/S0218196714500258), [arXiv: 1308.2122](https://arxiv.org/abs/1308.2122).
+
 [2] **Compression and Approximation of Neural Networks** Hugo Mouton (2023)
