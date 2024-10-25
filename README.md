@@ -4,7 +4,6 @@ TropicalPolyhedron is a library for dealing with tropical polyhedrons. Currently
 This first implementation in Julia is the conclusion of my research internship at LIX (Ecole Polytechnique, Palaiseau) as part of my M.Sc at ISAE-Supaero, Toulouse.
 
 ## Reminder
----
 
 A tropical polyhedron is defined externally by a set of $r$ constraints of the form :
 
@@ -13,7 +12,6 @@ $$A \cdot x + B \leq C \cdot x + D$$
 where $x \in \mathbb{R}^d_{\max};\  A,\  C \in \mathbb{R}^{r\times d}_{\max}; \ B, \ D \in \mathbb{R}^{r}_{\max}$.
 
 ## Usage
----
 
 The structure of such polyhedrons is given below: 
 
@@ -51,7 +49,6 @@ add_constraint!(tpoly, a, b, c, d)
 ```
 
 ## References
----
 You can find more information in my research report in this same repository.
 
 For the algorithm checking the emptiness of a tropical polyhedron and for the one checking whether a tropical constraint is redundant with respect to a tropical polyhedron  :
