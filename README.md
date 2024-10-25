@@ -9,7 +9,7 @@ A tropical polyhedron is defined externally by a set of $r$ constraints of the f
 
 $$A \cdot x + B \leq C \cdot x + D$$
 
-where $x \in \mathbb{R}^d_{\max};\  A,\  C \in \mathbb{R}^{r\times d}_{\max}; \ B, \ D \in \mathbb{R}^{r}_{\max}$.
+where $x \in \mathbb{R}^d_{\max};\  A,\  C \in  \mathbb{R}^{r\times d}\_{\max}; \ B, \ D \in \mathbb{R}^{r}_{\max}$.
 
 ## Usage
 
